@@ -23,8 +23,9 @@ pip install accelerate
 
 **Download dataset annotations and extracted captions.**
 
+Download data.zip from https://drive.google.com/file/d/13M10CB5ePPVlycn754_ff3CwnpPtDfJA/view?usp=drive_link
+
 ```bash
-# Download data.zip from https://drive.google.com/file/d/13M10CB5ePPVlycn754_ff3CwnpPtDfJA/view?usp=drive_link
 unzip data.zip
 ```
 
@@ -36,8 +37,9 @@ Note that LaViLa is trained on Ego4D, which has overlap with EgoSchema. To avoid
 
 **Download experiment results.**
 
+Download output.zip from https://drive.google.com/file/d/1d7a-FuQzdfQ7ZAzU5Y8HJpog1gm_sye_/view?usp=drive_link
+
 ```bash
-# Download output.zip from https://drive.google.com/file/d/1d7a-FuQzdfQ7ZAzU5Y8HJpog1gm_sye_/view?usp=drive_link
 unzip output.zip
 ```
 
