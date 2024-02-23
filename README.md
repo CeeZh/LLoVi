@@ -246,3 +246,16 @@ python main.py \
 --num_examples_to_run: how many examples to run. -1 (default) to run all.
 --start_from_scratch: ignore existing output files. Start from scratch.
 ```
+
+# Citation
+If you find this repository useful for your research, please consider citing our work:
+```
+@misc{zhang2023simple,
+      title={A Simple LLM Framework for Long-Range Video Question-Answering}, 
+      author={Ce Zhang and Taixi Lu and Md Mohaiminul Islam and Ziyang Wang and Shoubin Yu and Mohit Bansal and Gedas Bertasius},
+      year={2023},
+      eprint={2312.17235},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
+}
+```
