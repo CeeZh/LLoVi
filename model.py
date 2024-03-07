@@ -13,7 +13,7 @@ def get_model(args):
     if 'gpt' in model_name:
         model = GPT(args.api_key, model_name, temperature)
         return model
-    elif 'llama' in model_name:
+    elif 'Llama' in model_name:
         return LLaMA(model_name, temperature)
 
 

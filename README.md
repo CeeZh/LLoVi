@@ -72,7 +72,7 @@ python main.py --output_base_path output/egoschema --output_filename standard_qa
 python main.py --model gpt-3.5-turbo-1106 --output_base_path output/egoschema --output_filename standard_qa_1106.json --api_key YOUR_OPENAI_KEY
 
 # llama2 70B
-python main.py --model gpt-3.5-turbo-1106 --output_base_path output/egoschema --output_filename llama.json
+python main.py --model meta-llama/Llama-2-70b-chat-hf --output_base_path output/egoschema --output_filename llama.json
 
 # gpt-4 (please run gpt-3.5-turbo first as backup, otherwise please disable --backup_pred_path)
 python main.py --model gpt-4 --backup_pred_path output/egoschema/standard_qa.json --output_base_path output/egoschema --output_filename standard_qa_gpt4.json --api_key YOUR_OPENAI_KEY
@@ -85,7 +85,7 @@ python main.py --model gpt-4-1106-preview --output_base_path output/egoschema --
 | --- | --- | --- | --- |
 | LaViLa | gpt-3.5-turbo | standard | 51.2 |
 | LaViLa | gpt-3.5-turbo-1106 | standard | 55.2 |
-| LaViLa | https://huggingface.co/meta-llama/Llama-2-70b-chat-hf | standard | 55.4 |
+| LaViLa | [Llama-2-70B](https://huggingface.co/meta-llama/Llama-2-70b-chat-hf) | standard | 55.4 |
 | LaViLa | gpt-4 | standard | 59.0 |
 | LaViLa | gpt-4-1106-preview | standard | 61.2 |
 
