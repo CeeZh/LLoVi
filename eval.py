@@ -259,7 +259,7 @@ def eval_egoschema_cats(data_path, cats_path):
             truth = info['truth']
             for q_type in q_type_list:
                 if pred == -1:
-                    num_corrects[q_type] += 0.2
+                    continue
                 else:
                     num_corrects[q_type] += (pred==truth)
                 num_total[q_type] += 1
