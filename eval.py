@@ -4,6 +4,7 @@ from pprint import pprint
 from collections import Counter, defaultdict
 import argparse
 import pdb
+from eval_videomme import eval_your_results
 from util import *
 
 
@@ -12,6 +13,7 @@ def eval_qa_egoschema(data):
     num_corrects = 0
     for uid, el in data.items():
         if el['pred'] == -1:
+            num_corrects += 0.2  # random guess
             continue
         num_valids += 1
         if el['truth'] == el['pred']:
@@ -63,7 +65,9 @@ def eval_qa_nextqa(anno_file_path, preds):
             answer = preds[qid]['truth']
             pred = preds[qid]['pred']
 
-            if answer == pred: 
+            if pred == -1:
+                acc += 0.2
+            elif answer == pred: 
                 acc += 1
 
         group_cnt[qtype] = cnt
@@ -259,7 +263,7 @@ def eval_egoschema_cats(data_path, cats_path):
             truth = info['truth']
             for q_type in q_type_list:
                 if pred == -1:
-                    continue
+                    num_corrects[q_type] += 0.2
                 else:
                     num_corrects[q_type] += (pred==truth)
                 num_total[q_type] += 1
@@ -299,6 +303,27 @@ def eval_egoschema_cats(data_path, cats_path):
     print(f"all: {acc_all*100:.1f}")
 
 
+def eval_qa_videomme(data):
+    num_valids = 0
+    num_corrects = 0
+    for uid, el in data.items():
+        if el['pred'] == -1:
+            num_corrects += 0.25  # random guess
+            continue
+        num_valids += 1
+        if el['truth'] == el['pred']:
+            num_corrects += 1 
+    stat = {
+        'num_total': len(data),
+        'num_valids': num_valids,
+        'num_corrects': num_corrects,
+        'acc': num_corrects / len(data),
+    }
+    pprint(stat)
+    stat['data'] = data
+    return stat
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -330,4 +355,11 @@ python eval.py \
 gt_ground_path data/nextgqa/gsub_test.json \
 pred_qa_path output/nextgqa/gpt4_llava.json \
 pred_ground_path output/nextgqa/gpt4_llava_grounding.json
+
+
+
+python eval.py \
+--function eval_egoschema_cats \
+data_path output/egoschema/1106.json \
+cats_path data/egoschema/categories.json
 '''

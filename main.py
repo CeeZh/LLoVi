@@ -39,15 +39,16 @@ def launch():
     pbar = tqdm(total=len(dataset))
     for i, item in enumerate(dataset):
         clip_length = int(1/args.fps) if args.fps < 1 else 1/args.fps
+        clip_length *= args.caption_every
         few_shot_examples = build_fewshot_examples(args.fewshot_example_path, args.data_path)
-        prompt = prompter.fill(**item, fps=args.fps, clip_length=clip_length, num_words=args.num_words_in_sum, examplars=few_shot_examples)
+        prompt = prompter.fill(**item, fps=args.fps, clip_length=clip_length, caption_every=args.caption_every, num_words=args.num_words_in_sum, examplars=few_shot_examples)
         pred, info = model.forward(prompter.head, prompt)
-        ukey_name = 'quid' if 'quid' in item else 'uid'
+        ukey_name = dataset.ukey
         ukey = item[ukey_name]
         processed[ukey] = item
+        processed[ukey]['pred'] = pred
         processed[ukey]['prompt_template'] = prompter.get_template_str()
         processed[ukey]['response'] = info['response']
-        processed[ukey]['pred'] = pred
         if args.save_info:
             processed[ukey]['info'] = {k: v for k, v in info.items() if k != 'response'}
         if i % args.save_every == 0:
@@ -63,22 +64,36 @@ def launch():
             if processed[uid]['pred'] == -1:
                 processed[uid]['pred'] = backup[uid]['pred']
 
+    # if args.dataset == 'videomme':
+    #     eval_output_path = os.path.join(args.output_base_path, f'{args.output_filename}_temp.json')
+    #     processed_videomme = restore_videomme(processed, args.anno_path)
+    #     print(f'number of videos: {len(processed_videomme)}')
+    #     save_json(processed_videomme, eval_output_path)
+
+    save_json(processed, output_path)
+
     # if eval
     if not args.disable_eval:
         if args.task == 'qa':
             if args.dataset == 'egoschema':
                 processed = eval_qa_egoschema(processed)
+                save_json(processed, output_path)
             elif args.dataset in ['nextqa', 'intentqa', 'nextgqa']:
                 processed = eval_qa_nextqa(args.anno_path, processed)
+                save_json(processed, output_path)
+            elif args.dataset == 'videomme':
+                processed = eval_qa_videomme(processed)
+                save_json(processed, output_path)
+                # eval_videomme(eval_output_path, args.videomme_type)
         elif args.task == 'gqa':
             if args.dataset == 'nextgqa':
                 pred_qa_path = args.nextgqa_pred_qa_path if len(args.nextgqa_pred_qa_path) > 0 else None
                 processed = eval_gqa(args.nextgqa_gt_ground_path, processed, pred_qa_path=pred_qa_path)
+            save_json(processed, output_path)
         elif args.task == 'sum':
             processed, sum_data = eval_sum(processed)
             save_json(sum_data, f'{Path(output_path).parent / Path(output_path).stem}_data.json')
 
-    save_json(processed, output_path)
 
 
 if __name__ == '__main__':

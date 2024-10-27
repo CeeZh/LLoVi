@@ -46,7 +46,7 @@ class EgoSchemaDataset(BaseDataset):
 
     def format_narration(self, narr):
         if isinstance(narr, list):
-            narr = '. '.join(narr)
+            narr = '.\n'.join([f'{int(i*self.args.caption_every)}: {cap}' for i, cap in enumerate(narr[::self.args.caption_every])])
         return narr
 
     def get_anno(self):
@@ -77,6 +77,7 @@ class EgoSchemaDataset(BaseDataset):
             })
         return data
 
+
 class NextDataset(BaseDataset):
     def __init__(self, args, quids_to_exclude=None, num_examples_to_run=-1):
         self.set_ukey('quid')
@@ -87,9 +88,11 @@ class NextDataset(BaseDataset):
         return narrations
 
     def format_narration(self, narr):
-        if isinstance(narr, list):
-            caption_every = int(1/self.args.fps)
-            narr = '.\n'.join([f'{int(i*caption_every)}: {cap}' for i, cap in enumerate(narr[::caption_every])])
+        if isinstance(narr, dict):
+            narr = list(narr.items())
+            narr.sort(key=lambda x: int(x[0]))
+            narr = [el[1] for el in narr]
+        narr = '.\n'.join([f'{int(i*self.args.caption_every)}: {cap}' for i, cap in enumerate(narr[::self.args.caption_every])])
         return narr
 
     def get_anno(self):
@@ -127,11 +130,79 @@ class NextDataset(BaseDataset):
         return data
 
 
+class VideoMMEDataset(BaseDataset):
+    def __init__(self, args, quids_to_exclude=None, num_examples_to_run=-1):
+        self.set_ukey('q_uid')
+        super().__init__(args, quids_to_exclude=quids_to_exclude, num_examples_to_run=num_examples_to_run)
+
+    def get_descriptions(self):
+        narrations = load_json(self.args.data_path)
+        return narrations
+
+    def format_narration(self, narr):
+        if isinstance(narr, list):
+            narr = '.\n'.join([f'{int(i*self.args.caption_every)}: {cap}' for i, cap in enumerate(narr[::self.args.caption_every])])
+        return narr
+
+    def get_anno(self):
+        anno = load_json(self.args.anno_path) 
+        return anno
+
+    def build(self):
+        data = []
+        for quid, item in self.anno.items():
+            if item['videoID'] not in self.narrations:
+                continue
+            narration = self.format_narration(self.narrations[item['videoID']])
+            question = item['question']
+            choices = [item['option 0'], item['option 1'], item['option 2'], item['option 3']] 
+            truth = item['truth']
+            data.append({
+                'q_uid': quid,
+                'narration': narration,
+                'question': question,
+                'optionA': choices[0],
+                'optionB': choices[1],
+                'optionC': choices[2],
+                'optionD': choices[3],
+                'truth': truth,
+            })
+        return data
+    
+    # def build(self):
+    #     data = []
+    #     for video_data in self.anno:
+    #         narr_id = video_data['url'].split('?v=')[-1]
+    #         if narr_id not in self.narrations:
+    #             continue
+    #         narration = self.format_narration(self.narrations[narr_id])
+    #         for question_info in video_data['questions']:
+    #             choices = question_info['choices']
+    #             info = question_info
+    #             info.update({
+    #                 'question_id': question_info['question_id'],
+    #                 'video_id': video_data['video_id'],
+    #                 'narration': narration,
+    #                 'question': question_info['question'],
+    #                 'optionA': choices[0],
+    #                 'optionB': choices[1],
+    #                 'optionC': choices[2],
+    #                 'optionD': choices[3],
+    #                 'answer': question_info['answer'],
+    #             })
+    #             data.append(info)
+    #     return data
+    
+
 def get_dataset(args, quids_to_exclude=None, num_examples_to_run=-1):
     if args.dataset == 'egoschema':
         return EgoSchemaDataset(args, quids_to_exclude=quids_to_exclude, num_examples_to_run=num_examples_to_run)
-    else:
+    elif args.dataset in {'nextqa', 'nextgqa', 'intentqa'}:
         return NextDataset(args, quids_to_exclude=quids_to_exclude, num_examples_to_run=num_examples_to_run)
+    elif args.dataset == 'videomme':
+        return VideoMMEDataset(args, quids_to_exclude=quids_to_exclude, num_examples_to_run=num_examples_to_run)
+    else:
+        raise NotImplementedError()
 
 
 if __name__ == '__main__':

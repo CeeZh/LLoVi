@@ -31,7 +31,7 @@ unzip data.zip
 
 We provide extracted captions for **EgoSchema**, **NeXT-QA**, **NeXT-GQA** and **IntentQA** at `./data`. It also contains dataset annotations.
 
-We used [LaViLa](https://arxiv.org/pdf/2212.04501.pdf) base model to extract EgoSchema captions at 1 FPS, [LLaVA](https://llava-vl.github.io/) ([llava-hf/llava-1.5-13b-hf](https://huggingface.co/llava-hf/llava-1.5-13b-hf)) to extract captions for other datasets at 0.5 FPS. 
+We used [LaViLa](https://arxiv.org/pdf/2212.04501.pdf) base model and [LLaVA](https://llava-vl.github.io/) ([llava-hf/llava-1.5-13b-hf](https://huggingface.co/llava-hf/llava-1.5-13b-hf)) to extract EgoSchema captions at 1 FPS.
 
 Note that LaViLa is trained on Ego4D, which has overlap with EgoSchema. To avoid data leakage, we trained LaViLa using videos that are not in EgoSchema. You can download the model from [this link](https://drive.google.com/file/d/1AZ5I4eTUAUBX31rL8jLB00vNrlFGWiv8/view?usp=drive_link).
 
@@ -165,7 +165,7 @@ python eval.py \
 python main.py \
 --dataset nextqa \
 --data_path data/nextqa/llava1.5_fps1.json \
---fps 0.5 \
+--caption_every 2 \
 --anno_path data/nextqa/val.csv \
 --duration_path data/nextqa/durations.json \
 --prompt_type qa_next \
@@ -187,7 +187,7 @@ Accuracy:
 python main.py \
 --dataset intentqa \
 --data_path data/nextqa/llava1.5_fps1.json \
---fps 0.5 \
+--caption_every 2 \
 --anno_path data/intentqa/test.csv \
 --duration_path data/nextqa/durations.json \
 --prompt_type qa_next \
@@ -208,7 +208,7 @@ python main.py \
 python main.py \
 --dataset nextgqa \
 --data_path data/nextqa/llava1.5_fps1.json \
---fps 0.5 \
+--caption_every 2 \
 --anno_path data/nextgqa/test.csv \
 --duration_path data/nextqa/durations.json \
 --prompt_type qa_next \
@@ -221,7 +221,7 @@ python main.py \
 python main.py \
 --dataset nextgqa \
 --data_path data/nextqa/llava1.5_fps1.json \
---fps 0.5 \
+--caption_every 2 \
 --anno_path data/nextgqa/test.csv \
 --duration_path data/nextqa/durations.json \
 --nextgqa_gt_ground_path data/nextgqa/gsub_test.json \

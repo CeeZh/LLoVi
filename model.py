@@ -6,15 +6,18 @@ import transformers
 from prompts import identity
 import pdb
 from pprint import pprint
+import time
 
 
 def get_model(args):
-    model_name, temperature = args.model, args.temperature
+    model_name, temperature, max_new_tokens = args.model, args.temperature, args.max_new_tokens
     if 'gpt' in model_name:
         model = GPT(args.api_key, model_name, temperature)
         return model
-    elif 'Llama' in model_name:
-        return LLaMA(model_name, temperature)
+    elif 'Llama-2' in model_name:
+        return LLaMA2(model_name, temperature, max_new_tokens)
+    elif 'Llama-3' in model_name:
+        return LLaMA3(model_name, temperature, max_new_tokens) 
 
 
 class Model(object):
@@ -40,10 +43,6 @@ class GPT(Model):
             print('APIConnectionError')
             time.sleep(30)
             return self.get_response(**kwargs)
-        except openai.APIConnectionError as err:
-            print('APIConnectionError')
-            time.sleep(30)
-            return self.get_response(**kwargs)
         except openai.RateLimitError as e:
             print('RateLimitError')
             time.sleep(10)
@@ -54,7 +53,9 @@ class GPT(Model):
             return self.get_response(**kwargs)
         except openai.BadRequestError as e:
             print('BadRequestError')
-            kwargs['model'] = 'gpt-3.5-turbo-16k'
+            kwargs['messages'] = [{
+                "role": "user", "content": "Randomly return one letter from A, B, C, D."
+            }]
             return self.get_response(**kwargs)
 
     def forward(self, head, prompts):
@@ -80,11 +81,12 @@ class GPT(Model):
         return self.post_process_fn(info['response']), info
 
 
-class LLaMA(Model):
-    def __init__(self, model_name, temperature):
+class LLaMA2(Model):
+    def __init__(self, model_name, temperature, max_new_tokens):
         super().__init__()
         self.model_name = model_name
         self.temperature = temperature
+        self.max_new_tokens = max_new_tokens
 
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         tokenizer.pad_token = "[PAD]"
@@ -107,8 +109,48 @@ class LLaMA(Model):
             top_k=1,
             num_return_sequences=1,
             eos_token_id=self.tokenizer.eos_token_id,
+            max_new_tokens=self.max_new_tokens,
         )
         response = sequences[0]['generated_text']  # str
+        info = {
+            'message': prompt,
+            'response': response
+        }
+        return self.post_process_fn(info['response']), info
+
+
+class LLaMA3(Model):
+    def __init__(self, model_name, temperature, max_new_tokens):
+        super().__init__()
+        self.model_name = model_name
+        self.temperature = temperature
+        self.max_new_tokens = max_new_tokens
+        self.pipeline = transformers.pipeline(
+            "text-generation", 
+            model=model_name, 
+            model_kwargs={"torch_dtype": torch.float16}, 
+            device_map="auto",
+        )
+
+        self.terminators = [
+            self.pipeline.tokenizer.eos_token_id,
+            self.pipeline.tokenizer.convert_tokens_to_ids("<|eot_id|>")
+        ]
+
+    def forward(self, head, prompts):
+        prompt = prompts[0]
+        messages = [
+            {"role": "system", "content": head},
+            {"role": "user", "content": prompt}
+        ]
+        sequences = self.pipeline(
+            messages,
+            max_new_tokens=self.max_new_tokens,
+            eos_token_id=self.terminators,
+            do_sample=False,
+            temperature=self.temperature,
+        )
+        response = sequences[0]["generated_text"][-1]["content"]
         info = {
             'message': prompt,
             'response': response

@@ -1,11 +1,22 @@
 from string import Template
+import random
 
 
 def first_char_as_answer(res):
     mapping = {'A':0, 'B':1, 'C':2, 'D':3, 'E':4}
+    if len(res) == 0:
+        return -1
     if res[0] in mapping:
         return mapping[res[0]]
     return -1
+
+def first_char_as_answer_raw(res):
+    candidates = ['A', 'B', 'C', 'D']
+    if len(res) == 0:
+        return random.choice(candidates)
+    if res[0] in candidates:
+        return res[0]
+    return random.choice(candidates)
 
 def identity(res):
     return res
@@ -41,7 +52,10 @@ def get_intervals_as_list(text):
             start_text = '0'
         if end_text == 'None':
             end_text = '1'
-        start, end = int(start_text), int(end_text)
+        try:
+            start, end = int(start_text), int(end_text)
+        except:
+            start, end = 0, 1
         intervals.append([start, end])
     return intervals
 
@@ -80,7 +94,16 @@ class PromptFactory(object):
         prompt_templates['qa_standard'] = PromptTemplate(
             head = "You are a helpful expert in first person view video analysis.",
             template = [
-                Template("Please provide a single-letter answer (A, B, C, D, E) to the following multiple-choice question, and your answer must be one of the letters (A, B, C, D, or E). You must not provide any other response or explanation. You are given some language descriptions of a first person view video. The video is $duration seconds long. Each sentence describes a ${clip_length}s clip. The descriptions are sequential and non-overlapping which cover the whole video exactly. Here are the descriptions: $narration.\n You are going to answer a multiple choice question based on the descriptions, and your answer should be a single letter chosen from the choices.\n Here is the question: $question.\n Here are the choices.\n A: $optionA\n B: $optionB\n C: $optionC\n D: $optionD\n E: $optionE\n"),
+                Template("Please provide a single-letter answer (A, B, C, D, E) to the following multiple-choice question, and your answer must be one of the letters (A, B, C, D, or E). You must not provide any other response or explanation. You are given some language descriptions of a first person view video. The video is $duration seconds long. Each sentence describes a ${clip_length}s clip. The descriptions are sequential and non-overlapping which cover the whole video exactly. Here are the descriptions: $narration.\n You are going to answer a multiple choice question based on the descriptions, and your answer should be a single letter chosen from the choices.\n Here is the question: $question.\n Here are the choices.\n A: $optionA\n B: $optionB\n C: $optionC\n D: $optionD\n E: $optionE\n\n In your response, the first character should be your answer to this multiple choice question."),
+            ],
+            post_process_fn = first_char_as_answer
+        )
+
+        # egoschema QA (GT as input)
+        prompt_templates['qa_standard_gt'] = PromptTemplate(
+            head = "You are a helpful expert in first person view video analysis.",
+            template = [
+                Template("Please provide a single-letter answer (A, B, C, D, E) to the following multiple-choice question, and your answer must be one of the letters (A, B, C, D, or E). You must not provide any other response or explanation. You are given some language descriptions of a first person view video. The video is $duration seconds long. Here are the descriptions: $narration.\n You are going to answer a multiple choice question based on the descriptions, and your answer should be a single letter chosen from the choices.\n Here is the question: $question.\n Here are the choices.\n A: $optionA\n B: $optionB\n C: $optionC\n D: $optionD\n E: $optionE\n\n In your response, the first character should be your answer to this multiple choice question."),
             ],
             post_process_fn = first_char_as_answer
         )
@@ -98,7 +121,7 @@ class PromptFactory(object):
         prompt_templates['qa_sum'] = PromptTemplate(
             head = "You are a helpful expert in first person view video analysis.",
             template = [
-                Template("Please provide a single-letter answer (A, B, C, D, E) to the following multiple-choice question, and your answer must be one of the letters (A, B, C, D, or E). You must not provide any other response or explanation. You are given some language descriptions of a first person view video. The video is $duration seconds long. Here are the descriptions: $narration.\n You are going to answer a multiple choice question based on the descriptions, and your answer should be a single letter chosen from the choices.\n Here is the question: $question.\n Here are the choices.\n A: $optionA\n B: $optionB\n C: $optionC\n D: $optionD\n E: $optionE\n"),
+                Template("Please provide a single-letter answer (A, B, C, D, E) to the following multiple-choice question, and your answer must be one of the letters (A, B, C, D, or E). You must not provide any other response or explanation. You are given some language descriptions of a first person view video. The video is $duration seconds long. Here are the descriptions: $narration.\n You are going to answer a multiple choice question based on the descriptions, and your answer should be a single letter chosen from the choices.\n Here is the question: $question.\n Here are the choices.\n A: $optionA\n B: $optionB\n C: $optionC\n D: $optionD\n E: $optionE\n\nIn your response, the first character should be your answer to this multiple choice question."),
             ],
             post_process_fn = first_char_as_answer
         )
@@ -154,7 +177,7 @@ class PromptFactory(object):
         prompt_templates['qa_next'] = PromptTemplate(
             head = "You are a helpful expert in first person view video analysis.",
             template = [
-                Template("Please provide a single-letter answer (A, B, C, D, E) to the following multiple-choice question, and your answer must be one of the letters (A, B, C, D, or E). You must not provide any other response or explanation. If you are not sure, answer with the most likely answer. You are given some language descriptions of a first person view video. The video is 1 FPS and the descriptions are the captions every 2 frames. Each caption starts with the frame number.\nHere are the descriptions:\n$narration\n Here is the question: $question?\n Here are the choices:\n (A): $optionA\n (B): $optionB\n (C): $optionC\n (D): $optionD\n (E): $optionE\n"),
+                Template("Please provide a single-letter answer (A, B, C, D, E) to the following multiple-choice question, and your answer must be one of the letters (A, B, C, D, or E). You must not provide any other response or explanation. If you are not sure, answer with the most likely answer. You are given some language descriptions of a first person view video. The video is ${fps} FPS and the descriptions are the captions every 2 frames. Each caption starts with the frame number.\nHere are the descriptions:\n$narration\n Here is the question: $question?\n Here are the choices:\n (A): $optionA\n (B): $optionB\n (C): $optionC\n (D): $optionD\n (E): $optionE\n\nIn your response, the first character should be your answer to this multiple choice question."),
             ],
             post_process_fn = first_char_as_answer
         )
@@ -163,12 +186,12 @@ class PromptFactory(object):
         prompt_templates['gqa'] = PromptTemplate(
             head = "You are a helpful expert in first person view video analysis.",
             template = [
-                Template("I will provide video descriptions and one question about the video. The video is 1 FPS and the descriptions are the captions every 2 frames. Each caption starts with the frame number.\n To answer this question, what is the minimun frame interval to check?\n Follow this format: [frame_start_index, frame_end_index]. Do not provide any explanation.\n Here are the descriptions:\n$narration\n Here is the question: $question?\n Please follow the output format as follows:\n #Example1: [5, 19]\n #Example2: [30, 60]\n #Example3: [1, 10] and [50, 60]"),
+                Template("I will provide video descriptions and one question about the video. The video is ${fps} FPS and the descriptions are the captions every ${caption_every} frames. Each caption starts with the frame number.\n To answer this question, what is the minimun frame interval to check?\n Follow this format: [frame_start_index, frame_end_index]. Do not provide any explanation.\n Here are the descriptions:\n$narration\n Here is the question: $question?\n Please follow the output format as follows:\n #Example1: [5, 19]\n #Example2: [30, 60]\n #Example3: [1, 10] and [50, 60]"),
             ],
             post_process_fn = get_intervals_as_list
         )
 
-        # egoschema QA llama
+        # egoschema QA llama-2
         B_INST, E_INST = "[INST]", "[/INST]"
         B_SYS, E_SYS = "<<SYS>>\n", "\n<</SYS>>\n\n"
         anchor = 'The most correct answer is ('
@@ -180,7 +203,26 @@ class PromptFactory(object):
             post_process_fn = first_char_after_anchor(anchor)
         )
 
+        # egoschema QA llama-3
+        anchor = 'The most correct answer is ('
+        prompt_templates['qa_standard_llama-3'] = PromptTemplate(
+            head = "",
+            template = [
+                Template("Please provide a single-letter answer (A, B, C, D, E) to the following multiple-choice question, and your answer must be one of the letters (A, B, C, D, or E). You must not provide any other response or explanation. You are given some language descriptions of a first person view video. The video is $duration seconds long. Each sentence describes a ${clip_length}s clip. The descriptions are sequential and non-overlapping which cover the whole video exactly." + "\n\n" + 'Here are the descriptions:\n$narration\n Here is the question: $question.\n Here are the choices:\n (A): $optionA\n (B): $optionB\n (C): $optionC\n (D): $optionD\n (E): $optionE\n' + anchor),
+            ],
+            post_process_fn = first_char_after_anchor(anchor)
+        )
+
+        # videoMME QA GPT
+        prompt_templates['qa_videomme'] = PromptTemplate(
+            head = "You are a helpful expert in video analysis.",
+            template = [
+                Template("Please provide a single-letter answer (A, B, C, D) to the following multiple-choice question, and your answer must be one of the letters (A, B, C, or D). You must not provide any other response or explanation. If you are not sure, answer with the most likely answer. I will provide video descriptions and one question about the video. The video is ${fps} FPS and the descriptions are the captions every ${caption_every} frames. Each caption starts with the frame number. \nHere are the descriptions:\n$narration\n Here is the question: $question?\n Here are the choices:\n (A): $optionA\n (B): $optionB\n (C): $optionC\n (D): $optionD\n\nIn your response, the first character should be your answer to this multiple choice question."),
+            ],
+            post_process_fn = first_char_as_answer
+        )
         return prompt_templates
+    
 
     def get(self, prompt_type):
         return self.prompt_templates[prompt_type]
